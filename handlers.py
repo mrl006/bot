@@ -10,6 +10,7 @@ logging.basicConfig(level=logging.INFO)
 
 router = Router()
 user_last_message_time = {}  # ✅ Dictionary to track message cooldowns
+chat_history = {}  # ✅ Stores recent chat history per group
 
 # ✅ List of keywords related to design topics
 DESIGN_KEYWORDS = ["design", "logo", "poster", "flyer", "branding", "graphic", "animation", "banner", "motion graphics"]
@@ -41,27 +42,53 @@ def get_reaction(user_message):
             return emoji
     return None
 
-# ✅ AI RESPONSE HANDLER: Only Responds When Tagged OR When User Asks About Design
+# ✅ FUNCTION TO ANALYZE CHAT CONTEXT
+def is_chat_relevant(chat_id):
+    """Checks if previous messages in the chat are related to design, branding, or Murali."""
+    if chat_id not in chat_history:
+        return False
+    
+    last_messages = chat_history[chat_id][-5:]  # ✅ Analyze last 5 messages
+    combined_text = " ".join(last_messages).lower()
+
+    # ✅ Check if any recent messages contain design-related keywords
+    if any(keyword in combined_text for keyword in DESIGN_KEYWORDS):
+        return True
+    
+    # ✅ Check if recent messages mention Murali, MRL, or the bot name
+    if "mrl" in combined_text or "murali" in combined_text or "@mrlcreation" in combined_text:
+        return True
+    
+    return False
+
+# ✅ AI RESPONSE HANDLER: Now Analyzes the Entire Chat Before Responding
 @router.message()
 async def ai_response(message: Message):
     user_message = message.text.strip()
     user_id = message.from_user.id  
-    user_name = message.from_user.first_name  
+    chat_id = message.chat.id
     current_time = asyncio.get_event_loop().time()
 
     if not user_message:
         return  
 
+    # ✅ Store chat history (track last 10 messages per chat)
+    if chat_id not in chat_history:
+        chat_history[chat_id] = []
+    
+    chat_history[chat_id].append(user_message)
+    chat_history[chat_id] = chat_history[chat_id][-10:]  # ✅ Keep only the last 10 messages
+
     # ✅ Detect if Murali or MRL was explicitly mentioned/tagged
     bot_username = "@mrlcreation"  # Replace with your bot's username
     user_mentioned = bot_username in user_message or "mrl" in user_message.lower() or "murali" in user_message.lower()
 
-    # ✅ Check if message contains design-related words
-    is_design_related = any(keyword in user_message.lower() for keyword in DESIGN_KEYWORDS)
+    # ✅ Check if the entire chat context is relevant to you
+    chat_is_relevant = is_chat_relevant(chat_id)
 
-    # ✅ Ignore messages if AI is in a group and NOT tagged, unless it's about design
-    if message.chat.type in ["group", "supergroup"] and not user_mentioned and not is_design_related:
-        logging.info(f"Ignoring untagged, non-design message: {user_message}")
+    # ✅ Ignore messages if AI is in a group and NOT tagged, unless the chat is relevant
+    if message.chat.type in ["group", "supergroup"] and not user_mentioned and not chat_is_relevant:
+        logging.info(f"Ignoring non-relevant chat message: {user_message}")
         return  
 
     # ✅ Prevent spam (5-second cooldown per user)
@@ -74,7 +101,7 @@ async def ai_response(message: Message):
     # ✅ Update last message time
     user_last_message_time[user_id] = current_time
 
-    # ✅ React to important messages in groups (Removed unsupported `message.react`)
+    # ✅ React to important messages in groups
     reaction_emoji = get_reaction(user_message)
     if reaction_emoji:
         try:
@@ -100,4 +127,3 @@ async def ai_response(message: Message):
 
     # ✅ Log AI response for debugging
     logging.info(f"AI Response Sent: {ai_reply}")
-
