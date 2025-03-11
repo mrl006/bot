@@ -1,18 +1,23 @@
-# ai_memory.py (Stores Chat History & Remembers Past Interactions)
-import sqlite3
-from config import DB_PATH
+import json
 
-def save_chat(user_id, message):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO chat_history (user_id, message) VALUES (?, ?)", (user_id, message))
-    conn.commit()
-    conn.close()
+USER_MEMORY_FILE = "user_memory.json"
 
-def get_chat_history(user_id):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute("SELECT message FROM chat_history WHERE user_id = ?", (user_id,))
-    history = cursor.fetchall()
-    conn.close()
-    return history if history else ["No previous messages found."]
+def load_user_memory():
+    """Load user preferences from a JSON file."""
+    try:
+        with open(USER_MEMORY_FILE, "r") as file:
+            return json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+def save_user_memory(memory):
+    """Save user preferences to a JSON file."""
+    with open(USER_MEMORY_FILE, "w") as file:
+        json.dump(memory, file, indent=2)
+
+user_memory = load_user_memory()
+
+def remember_user_preference(user_id, preference):
+    """Save a user's preferred design style or service."""
+    user_memory[user_id] = preference
+    save_user_memory(user_memory)
