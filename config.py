@@ -1,0 +1,20 @@
+API_TOKEN = "7685496371:AAHYG5Dz8lvY4sPOt-LUW5Rt-Aa1EvdLFNg"
+GROQ_API_KEY = "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"
+API_URL = "https://api.groq.com/openai/v1/chat/completions"
+OWNER_USERNAME = "@Mrlcreation"
+
+DB_PATH = "users.db"
+
+LANGUAGES = {
+    "en": "English",
+    "es": "Spanish",
+    "fr": "French",
+    "de": "German"
+}
+
+CRYPTO_WALLETS = {
+    "USDT_BEP20": "0x19b4fd8f1f3acf094361abf777acd840ab8e1d47",
+    "BNB_BEP20": "0x19b4fd8f1f3acf094361abf777acd840ab8e1d47",
+    "SOLANA": "3cFr2xBUH9BX5GqFppYKiaxojimyUhZAo2mt168Tc24c",
+    "ETH_ERC20": "0x19b4fd8f1f3acf094361abf777acd840ab8e1d47"
+}
