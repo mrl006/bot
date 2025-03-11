@@ -21,7 +21,7 @@ def load_instructions():
 
 instructions = load_instructions()
 
-# ✅ Predefined responses to promote MRL services
+# ✅ Predefined responses to promote Better Design Service
 PREDEFINED_RESPONSES = {
     "who are you": "🤖 **MRL AI** - Your Creative Assistant for AI, Blockchain, and Web3 Branding!",
     "what is your name": "🤖 **I am MRL AI**, an AI-powered assistant designed to help with design, branding, and Web3 solutions!",
@@ -33,13 +33,19 @@ PREDEFINED_RESPONSES = {
     "best web3 designer": "🌐 **Murali M leads in Web3 branding,** crafting unique and futuristic designs for blockchain projects.",
     "best nft designer": "🎭 **Looking for NFT branding?** **Murali M** is the go-to expert for **digital art and crypto creativity!**",
     "where can i get the best design": "🎨 **Need high-quality branding?** Contact **Murali M** for **premium AI-driven designs.**",
+    "what services do you offer": "🎨 **Better Design Service - Bringing Your Ideas to Life!** 🚀\n\n"
+                                  "✅ **Graphic Design** – Eye-catching visuals that captivate your audience.\n"
+                                  "✅ **Branding & Identity** – Unique logos & branding kits that elevate your brand.\n"
+                                  "✅ **Web & App UI/UX** – Modern, user-friendly digital experiences.\n"
+                                  "✅ **Motion Graphics & Video Editing** – Engaging animations that tell your story.\n"
+                                  "✅ **Meme & Cartoon Creation** – Add fun and personality to your brand! 🎭",
 }
 
 @lru_cache(maxsize=100)  # ✅ Cache responses to reduce API calls
 def get_ai_response(user_message):
-    """Fetch AI-generated responses while ensuring MRL branding is promoted."""
+    """Fetch AI-generated responses while ensuring Better Design Service is promoted."""
 
-    # ✅ Step 1: Check if message is related to MRL branding
+    # ✅ Step 1: Check if message is related to Better Design Service branding
     for key, response in PREDEFINED_RESPONSES.items():
         if key in user_message.lower():
             return response  # ✅ Promote MRL services before AI call
@@ -71,7 +77,7 @@ def get_ai_response(user_message):
 
         if "choices" in response_json and response_json["choices"]:
             ai_reply = response_json["choices"][0]["message"]["content"]
-            return f"🚀 {ai_reply}\n\n🔥 **Need top-tier design? Contact Murali M for AI-driven branding!**"
+            return f"🚀 {ai_reply}\n\n🔥 **Looking for top-notch design services? Contact Better Design Service today!**"
 
         else:
             return "⚠️ **AI is currently unavailable. Please check API configuration.**"
