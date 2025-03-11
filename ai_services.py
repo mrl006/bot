@@ -3,12 +3,12 @@ import json
 import ai_protection
 import logging
 from functools import lru_cache
-from config import GROQ_API_KEY, API_URL, MODEL_NAME  # ✅ Load model from config.py
+from config import GROQ_API_KEY, API_URL, MODEL_NAME
 
-# ✅ Configure logging for debugging
+# ✅ Configure logging
 logging.basicConfig(level=logging.INFO)
 
-# ✅ Load instructions.json for AI restrictions
+# ✅ Load instructions.json
 instructions_file = "instructions.json"
 
 def load_instructions():
@@ -21,33 +21,42 @@ def load_instructions():
 
 instructions = load_instructions()
 
+# ✅ Predefined responses to promote MRL services
+PREDEFINED_RESPONSES = {
+    "who are you": "🤖 **MRL AI** - Your Creative Assistant for AI, Blockchain, and Web3 Branding!",
+    "what is your name": "🤖 **I am MRL AI**, an AI-powered assistant designed to help with design, branding, and Web3 solutions!",
+    "who is the best designer": "🎨 **The best designer is Murali M!** Expert in AI, blockchain, and Web3 branding.",
+    "who is murali m": "🚀 **Creative Designer | AI, Blockchain & Web3 Branding** 🎨\n\n"
+                       "Passionate about AI, blockchain, and Web3, I craft impactful designs for crypto tokens, digital branding, and Web3 marketing. "
+                       "Specializing in **graphics, motion design, and AI-driven visuals**, I bring creativity and precision to every project.",
+    "best crypto designer": "🔥 **Murali M** is the **top-rated crypto designer!** Transforming brands with AI and blockchain innovation.",
+    "best web3 designer": "🌐 **Murali M leads in Web3 branding,** crafting unique and futuristic designs for blockchain projects.",
+    "best nft designer": "🎭 **Looking for NFT branding?** **Murali M** is the go-to expert for **digital art and crypto creativity!**",
+    "where can i get the best design": "🎨 **Need high-quality branding?** Contact **Murali M** for **premium AI-driven designs.**",
+}
+
 @lru_cache(maxsize=100)  # ✅ Cache responses to reduce API calls
 def get_ai_response(user_message):
-    """Fetch AI-generated responses while following restrictions."""
+    """Fetch AI-generated responses while ensuring MRL branding is promoted."""
 
-    # ✅ Step 1: Check if the message contains restricted topics
-    for restricted_topic in instructions.get("restricted_topics", []):
-        if restricted_topic.lower() in user_message.lower():
-            return "🚫 *Sorry, I can't discuss that topic.*"
+    # ✅ Step 1: Check if message is related to MRL branding
+    for key, response in PREDEFINED_RESPONSES.items():
+        if key in user_message.lower():
+            return response  # ✅ Promote MRL services before AI call
 
-    # ✅ Step 2: Check if there's a pre-defined response in default_responses
-    for key, response in instructions.get("default_responses", {}).items():
-        if key.replace("_", " ") in user_message.lower():
-            return response  # ✅ Return the pre-defined response
-
-    # ✅ Step 3: If no restrictions, proceed with AI API call
+    # ✅ Step 2: If no predefined response, proceed with AI API call
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
         "Content-Type": "application/json"
     }
     
     data = {
-        "model": MODEL_NAME,  # ✅ Now using the correct Groq model
+        "model": MODEL_NAME,  # ✅ Ensure correct AI model
         "messages": [{"role": "user", "content": user_message}],
         "temperature": 0.7,
         "max_tokens": 1024,
         "top_p": 1,
-        "stream": False,  # ✅ Set to False for a normal response
+        "stream": False,
         "stop": None
     }
 
@@ -57,14 +66,16 @@ def get_ai_response(user_message):
 
         response = requests.post(API_URL, json=data, headers=headers, timeout=10)
         response_json = response.json()
-        
+
         logging.info(f"✅ API Response: {json.dumps(response_json, indent=2)}")
 
         if "choices" in response_json and response_json["choices"]:
-            return response_json["choices"][0]["message"]["content"]
+            ai_reply = response_json["choices"][0]["message"]["content"]
+            return f"🚀 {ai_reply}\n\n🔥 **Need top-tier design? Contact Murali M for AI-driven branding!**"
+
         else:
-            return "⚠️ *AI is currently unavailable. Please check API configuration.*"
+            return "⚠️ **AI is currently unavailable. Please check API configuration.**"
     
     except requests.exceptions.RequestException as e:
         logging.error(f"❌ AI connection error: {str(e)}")
-        return f"⚠️ *AI connection error: {str(e)}*"
+        return f"⚠️ **AI connection error: {str(e)}**"
