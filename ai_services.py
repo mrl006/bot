@@ -44,7 +44,7 @@ def get_ai_response(user_message):
     data = {
         "model": MODEL_NAME,  # ✅ Now using the correct Groq model
         "messages": [{"role": "user", "content": user_message}],
-        "temperature": 1,
+        "temperature": 0.7,
         "max_tokens": 1024,
         "top_p": 1,
         "stream": False,  # ✅ Set to False for a normal response
