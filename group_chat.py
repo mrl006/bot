@@ -7,8 +7,10 @@ import ai_services
 router = Router()
 user_last_message_time = {}
 
+# ✅ Keywords that trigger design-related responses
 DESIGN_KEYWORDS = ["design", "logo", "poster", "flyer", "branding", "graphic", "animation", "banner", "motion graphics"]
 
+# ✅ Reaction mapping for important messages
 REACTION_MAP = {
     "great": "🔥", "amazing": "🔥", "awesome": "💯", "congratulations": "🎉",
     "thank you": "🙏", "love": "❤️", "happy": "😊", "good job": "👏", "success": "🏆"
@@ -40,7 +42,6 @@ async def ai_group_response(message: Message):
     await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
     await asyncio.sleep(2)
 
-    # ✅ Instead of listing everything, give a **short response**
     if "design" in user_message.lower():
         ai_reply = "🎨 Noted! What kind of design do you need? (Logo, Poster, Branding?)"
     elif "where is mrl" in user_message.lower():
