@@ -1,7 +1,11 @@
+import logging
 from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
 import ai_services  # ✅ Import AI response module
+
+# ✅ Enable logging for debugging
+logging.basicConfig(level=logging.INFO)
 
 router = Router()
 
@@ -28,8 +32,8 @@ async def ai_response(message: Message):
     if not user_message:
         return  # Ignore empty messages
 
-    # ✅ Show typing indicator before sending AI response
-    await message.answer_chat_action("typing")
+    # ✅ FIX: Use send_chat_action() instead of answer_chat_action()
+    await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
 
     ai_reply = ai_services.get_ai_response(user_message)  # ✅ Send message to AI
     await message.answer(ai_reply, parse_mode="Markdown")  # ✅ Reply to user
