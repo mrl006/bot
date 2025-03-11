@@ -33,7 +33,7 @@ async def welcome_new_member(update: ChatMemberUpdated):
         )
         await update.chat.send_message(welcome_message, parse_mode="Markdown")
 
-# 💬 AI RESPONSE HANDLER: AI responds based on Murali's availability and client needs
+# ✅ AI RESPONSE HANDLER: Responds ONLY if tagged in a group
 @router.message()
 async def ai_response(message: Message):
     user_message = message.text.strip()
@@ -44,8 +44,14 @@ async def ai_response(message: Message):
     if not user_message:
         return  
 
-    # ✅ Detect if Murali or MRL was mentioned
-    user_mentioned = "mrl" in user_message.lower() or "murali" in user_message.lower()
+    # ✅ Detect if Murali or MRL was explicitly mentioned/tagged
+    bot_username = "@mrlcreation"  # Replace with your bot's username
+    user_mentioned = bot_username in user_message or "mrl" in user_message.lower() or "murali" in user_message.lower()
+
+    # ✅ Ignore messages if AI is in a group and NOT tagged
+    if message.chat.type in ["group", "supergroup"] and not user_mentioned:
+        logging.info(f"Ignoring untagged message: {user_message}")
+        return  
 
     # ✅ Prevent spam (5-second cooldown per user)
     if user_id in user_last_message_time:
