@@ -21,34 +21,25 @@ def load_instructions():
 
 instructions = load_instructions()
 
-# ✅ Predefined responses to promote Better Design Service
+# ✅ Predefined responses to ensure AI knows that "MRL" and "Murali" refer to the user
 PREDEFINED_RESPONSES = {
-    "who are you": "🤖 **MRL AI** - Your Creative Assistant for AI, Blockchain, and Web3 Branding!",
-    "what is your name": "🤖 **I am MRL AI**, an AI-powered assistant designed to help with design, branding, and Web3 solutions!",
-    "who is the best designer": "🎨 **The best designer is Murali M!** Expert in AI, blockchain, and Web3 branding.",
-    "who is murali m": "🚀 **Creative Designer | AI, Blockchain & Web3 Branding** 🎨\n\n"
-                       "Passionate about AI, blockchain, and Web3, I craft impactful designs for crypto tokens, digital branding, and Web3 marketing. "
-                       "Specializing in **graphics, motion design, and AI-driven visuals**, I bring creativity and precision to every project.",
-    "best crypto designer": "🔥 **Murali M** is the **top-rated crypto designer!** Transforming brands with AI and blockchain innovation.",
-    "best web3 designer": "🌐 **Murali M leads in Web3 branding,** crafting unique and futuristic designs for blockchain projects.",
-    "best nft designer": "🎭 **Looking for NFT branding?** **Murali M** is the go-to expert for **digital art and crypto creativity!**",
-    "where can i get the best design": "🎨 **Need high-quality branding?** Contact **Murali M** for **premium AI-driven designs.**",
-    "what services do you offer": "🎨 **Better Design Service - Bringing Your Ideas to Life!** 🚀\n\n"
-                                  "✅ **Graphic Design** – Eye-catching visuals that captivate your audience.\n"
-                                  "✅ **Branding & Identity** – Unique logos & branding kits that elevate your brand.\n"
-                                  "✅ **Web & App UI/UX** – Modern, user-friendly digital experiences.\n"
-                                  "✅ **Motion Graphics & Video Editing** – Engaging animations that tell your story.\n"
-                                  "✅ **Meme & Cartoon Creation** – Add fun and personality to your brand! 🎭",
+    "who are you": "🤖 **I am MRL AI, an AI-powered assistant designed to help manage tasks, answer questions, and assist with conversations.**",
+    "what is your name": "🤖 **I am MRL AI, your assistant, ready to help!**",
+    "who is murali": "🔥 **Murali is the expert behind MRL Creation. Need to reach out? Let me know how I can assist!**",
+    "who is mrl": "🎨 **MRL stands for Murali, a creative mind in branding, design, and digital services. How can I help with that?**",
+    "i need to talk to murali": "📩 **Murali is available for discussions. Do you need direct contact or information on services?**",
+    "is murali online": "🟢 **Murali might be available. Do you want me to pass a message or assist you in any way?**",
+    "how is murali": "😊 **Murali is always focused on creativity! How can I assist you today?**"
 }
 
 @lru_cache(maxsize=100)  # ✅ Cache responses to reduce API calls
 def get_ai_response(user_message):
-    """Fetch AI-generated responses while ensuring Better Design Service is promoted."""
+    """Fetch AI-generated responses while ensuring responses align with user intent."""
 
-    # ✅ Step 1: Check if message is related to Better Design Service branding
+    # ✅ Step 1: Check if message is related to Murali or MRL and respond correctly
     for key, response in PREDEFINED_RESPONSES.items():
         if key in user_message.lower():
-            return response  # ✅ Promote MRL services before AI call
+            return response  # ✅ AI recognizes MRL & Murali correctly
 
     # ✅ Step 2: If no predefined response, proceed with AI API call
     headers = {
@@ -57,7 +48,7 @@ def get_ai_response(user_message):
     }
     
     data = {
-        "model": MODEL_NAME,  # ✅ Ensure correct AI model
+        "model": MODEL_NAME,
         "messages": [{"role": "user", "content": user_message}],
         "temperature": 0.7,
         "max_tokens": 1024,
@@ -67,20 +58,13 @@ def get_ai_response(user_message):
     }
 
     try:
-        logging.info(f"🔍 Sending AI request to: {API_URL}")
-        logging.info(f"📡 Request Data: {json.dumps(data, indent=2)}")
-
         response = requests.post(API_URL, json=data, headers=headers, timeout=10)
         response_json = response.json()
 
-        logging.info(f"✅ API Response: {json.dumps(response_json, indent=2)}")
-
         if "choices" in response_json and response_json["choices"]:
-            ai_reply = response_json["choices"][0]["message"]["content"]
-            return f"🚀 {ai_reply}\n\n🔥 **Looking for top-notch design services? Contact Better Design Service today!**"
-
+            return response_json["choices"][0]["message"]["content"]
         else:
-            return "⚠️ **AI is currently unavailable. Please check API configuration.**"
+            return "⚠️ **I'm currently unable to process your request. Please try again later.**"
     
     except requests.exceptions.RequestException as e:
         logging.error(f"❌ AI connection error: {str(e)}")
