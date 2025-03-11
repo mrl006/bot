@@ -5,7 +5,7 @@ from aiogram.types import Message, ReactionTypeEmoji
 import ai_services  
 
 router = Router()
-user_last_message_time = {}  # ✅ Prevent spam
+user_last_message_time = {}
 
 DESIGN_KEYWORDS = ["design", "logo", "poster", "flyer", "branding", "graphic", "animation", "banner", "motion graphics"]
 
@@ -40,9 +40,11 @@ async def ai_group_response(message: Message):
     await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
     await asyncio.sleep(2)
 
-    # ✅ Instead of listing everything, ask a **follow-up question**
+    # ✅ Instead of listing everything, give a **short response**
     if "design" in user_message.lower():
-        ai_reply = "🎨 What type of design do you need? (Logo, Branding, Poster, Animation?)"
+        ai_reply = "🎨 Noted! What kind of design do you need? (Logo, Poster, Branding?)"
+    elif "where is mrl" in user_message.lower():
+        ai_reply = "🔹 MRL will be available shortly!"
     else:
         ai_reply = ai_services.get_short_ai_response(user_message, is_group_chat=True)
 
