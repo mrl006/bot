@@ -11,6 +11,9 @@ logging.basicConfig(level=logging.INFO)
 router = Router()
 user_last_message_time = {}  # ✅ Dictionary to track message cooldowns
 
+# ✅ List of keywords related to design topics
+DESIGN_KEYWORDS = ["design", "logo", "poster", "flyer", "branding", "graphic", "animation", "banner", "motion graphics"]
+
 # ✅ FUNCTION TO CHECK IMPORTANT MESSAGES FOR REACTIONS
 def get_reaction(user_message):
     """Determine the right emoji reaction based on the message content."""
@@ -38,7 +41,7 @@ def get_reaction(user_message):
             return emoji
     return None
 
-# ✅ AI RESPONSE HANDLER: Short, Human-Like Replies in Group Chats
+# ✅ AI RESPONSE HANDLER: Only Responds When Tagged OR When User Asks About Design
 @router.message()
 async def ai_response(message: Message):
     user_message = message.text.strip()
@@ -53,9 +56,12 @@ async def ai_response(message: Message):
     bot_username = "@mrlcreation"  # Replace with your bot's username
     user_mentioned = bot_username in user_message or "mrl" in user_message.lower() or "murali" in user_message.lower()
 
-    # ✅ Ignore messages if AI is in a group and NOT tagged
-    if message.chat.type in ["group", "supergroup"] and not user_mentioned:
-        logging.info(f"Ignoring untagged message: {user_message}")
+    # ✅ Check if message contains design-related words
+    is_design_related = any(keyword in user_message.lower() for keyword in DESIGN_KEYWORDS)
+
+    # ✅ Ignore messages if AI is in a group and NOT tagged, unless it's about design
+    if message.chat.type in ["group", "supergroup"] and not user_mentioned and not is_design_related:
+        logging.info(f"Ignoring untagged, non-design message: {user_message}")
         return  
 
     # ✅ Prevent spam (5-second cooldown per user)
