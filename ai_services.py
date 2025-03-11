@@ -21,27 +21,41 @@ def load_instructions():
 
 instructions = load_instructions()
 
-# ✅ Predefined responses to ensure AI knows that "MRL" and "Murali" refer to the user
+# ✅ Manually update availability status (You can integrate a live update feature)
+MURALI_AVAILABLE = True  # Change to False when unavailable
+
+# ✅ Predefined responses to recognize when people mention you
 PREDEFINED_RESPONSES = {
-    "who are you": "🤖 **I am MRL AI, an AI-powered assistant designed to help manage tasks, answer questions, and assist with conversations.**",
-    "what is your name": "🤖 **I am MRL AI, your assistant, ready to help!**",
-    "who is murali": "🔥 **Murali is the expert behind MRL Creation. Need to reach out? Let me know how I can assist!**",
-    "who is mrl": "🎨 **MRL stands for Murali, a creative mind in branding, design, and digital services. How can I help with that?**",
-    "i need to talk to murali": "📩 **Murali is available for discussions. Do you need direct contact or information on services?**",
-    "is murali online": "🟢 **Murali might be available. Do you want me to pass a message or assist you in any way?**",
-    "how is murali": "😊 **Murali is always focused on creativity! How can I assist you today?**"
+    "who are you": "🤖 **I am MRL AI, an AI-powered assistant ready to help with your requests!**",
+    "what is your name": "🤖 **I am MRL AI, here to assist you with all your needs!**",
+    "is murali available": "🟢 **Murali is currently available! How can I assist you on his behalf?**" if MURALI_AVAILABLE else "🔴 **Murali is currently unavailable, but I can take a message or assist you right now. Let me know what you need!**",
+    "where is murali": "📍 **Murali might be busy at the moment. Would you like me to take a message or help you with anything in the meantime?**",
+    "can i talk to murali": "📩 **I can check if Murali is available. What would you like to discuss?**",
 }
 
 @lru_cache(maxsize=100)  # ✅ Cache responses to reduce API calls
-def get_ai_response(user_message):
-    """Fetch AI-generated responses while ensuring responses align with user intent."""
+def get_ai_response(user_message, user_mentioned=False):
+    """Fetch AI-generated responses while ensuring the bot correctly understands user intent."""
 
-    # ✅ Step 1: Check if message is related to Murali or MRL and respond correctly
+    # ✅ Step 1: If the user mentioned Murali or MRL, handle availability
+    if user_mentioned:
+        if "available" in user_message.lower():
+            return PREDEFINED_RESPONSES["is murali available"]
+        elif "talk to murali" in user_message.lower():
+            return PREDEFINED_RESPONSES["can i talk to murali"]
+        elif "where is murali" in user_message.lower():
+            return PREDEFINED_RESPONSES["where is murali"]
+
+    # ✅ Step 2: Check if message has a predefined response
     for key, response in PREDEFINED_RESPONSES.items():
         if key in user_message.lower():
-            return response  # ✅ AI recognizes MRL & Murali correctly
+            return response  
 
-    # ✅ Step 2: If no predefined response, proceed with AI API call
+    # ✅ Step 3: If it's a client request, ask clarifying questions before calling AI
+    if "need" in user_message.lower() or "looking for" in user_message.lower() or "want" in user_message.lower():
+        return "🔍 **Can you provide more details about what you need? I'm here to help!**"
+
+    # ✅ Step 4: If no predefined response, proceed with AI API call
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
         "Content-Type": "application/json"
