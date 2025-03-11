@@ -3,12 +3,12 @@ import json
 import ai_protection
 import logging
 from functools import lru_cache
-from config import GROQ_API_KEY, API_URL
+from config import GROQ_API_KEY, API_URL, MODEL_NAME  # ✅ Load model from config.py
 
-# Configure logging
+# ✅ Configure logging for debugging
 logging.basicConfig(level=logging.INFO)
 
-# Load instructions.json
+# ✅ Load instructions.json for AI restrictions
 instructions_file = "instructions.json"
 
 def load_instructions():
@@ -21,30 +21,34 @@ def load_instructions():
 
 instructions = load_instructions()
 
-@lru_cache(maxsize=100)  # Cache up to 100 responses
+@lru_cache(maxsize=100)  # ✅ Cache responses to reduce API calls
 def get_ai_response(user_message):
     """Fetch AI-generated responses while following restrictions."""
 
-    # Step 1: Check if the message contains restricted topics
+    # ✅ Step 1: Check if the message contains restricted topics
     for restricted_topic in instructions.get("restricted_topics", []):
         if restricted_topic.lower() in user_message.lower():
             return "🚫 *Sorry, I can't discuss that topic.*"
 
-    # Step 2: Check if there's a pre-defined response in default_responses
+    # ✅ Step 2: Check if there's a pre-defined response in default_responses
     for key, response in instructions.get("default_responses", {}).items():
         if key.replace("_", " ") in user_message.lower():
             return response  # ✅ Return the pre-defined response
 
-    # Step 3: If no restrictions, proceed with AI API call
+    # ✅ Step 3: If no restrictions, proceed with AI API call
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
         "Content-Type": "application/json"
     }
     
     data = {
-        "model": "gpt-4",  # Ensure it matches your AI service model
+        "model": MODEL_NAME,  # ✅ Now using the correct Groq model
         "messages": [{"role": "user", "content": user_message}],
-        "temperature": 0.7
+        "temperature": 1,
+        "max_tokens": 1024,
+        "top_p": 1,
+        "stream": False,  # ✅ Set to False for a normal response
+        "stop": None
     }
 
     try:
