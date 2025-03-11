@@ -74,11 +74,14 @@ async def ai_response(message: Message):
     # ✅ Update last message time
     user_last_message_time[user_id] = current_time
 
-    # ✅ React to important messages in groups
+    # ✅ React to important messages in groups (Removed unsupported `message.react`)
     reaction_emoji = get_reaction(user_message)
     if reaction_emoji:
         try:
-            await message.react(ReactionTypeEmoji(emoji=reaction_emoji))
+            await message.bot.send_message(
+                chat_id=message.chat.id,
+                text=f"{reaction_emoji}"  # ✅ Sends reaction as a separate message
+            )
             logging.info(f"Reacted with {reaction_emoji} to: {user_message}")
         except Exception as e:
             logging.error(f"Failed to react: {str(e)}")
@@ -86,9 +89,15 @@ async def ai_response(message: Message):
     # ✅ Show "typing..." before responding
     await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
 
+    # ✅ Log the incoming user message
+    logging.info(f"User Message: {user_message}")
+
     # ✅ Get AI response in SHORT form for group chat
     ai_reply = ai_services.get_short_ai_response(user_message, user_mentioned=user_mentioned)
+
+    # ✅ Send the AI's response
     await message.answer(ai_reply, parse_mode="Markdown")
 
     # ✅ Log AI response for debugging
     logging.info(f"AI Response Sent: {ai_reply}")
+
