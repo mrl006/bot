@@ -1,20 +1,33 @@
-API_TOKEN = "7685496371:AAHYG5Dz8lvY4sPOt-LUW5Rt-Aa1EvdLFNg"
-GROQ_API_KEY = "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"
-API_URL = "https://api.groq.com/openai/v1/chat/completions"
-OWNER_USERNAME = "@Mrlcreation"
+import os
+from dotenv import load_dotenv
 
-DB_PATH = "users.db"
+# ✅ Load environment variables from .env file
+load_dotenv()
 
+# ✅ Secure API keys
+API_TOKEN = os.getenv("API_TOKEN")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+API_URL = os.getenv("API_URL")
+MODEL_NAME = os.getenv("MODEL_NAME")  # ✅ AI Model for Groq
+
+# ✅ Database Path
+DB_PATH = os.getenv("DB_PATH")
+
+# ✅ Owner Information
+OWNER_USERNAME = os.getenv("OWNER_USERNAME")
+
+# ✅ Supported Languages (Loaded from .env)
 LANGUAGES = {
-    "en": "English",
-    "es": "Spanish",
-    "fr": "French",
-    "de": "German"
+    "en": os.getenv("LANG_EN"),
+    "es": os.getenv("LANG_ES"),
+    "fr": os.getenv("LANG_FR"),
+    "de": os.getenv("LANG_DE"),
 }
 
+# ✅ Crypto Wallets (Loaded Securely from .env)
 CRYPTO_WALLETS = {
-    "USDT_BEP20": "0x19b4fd8f1f3acf094361abf777acd840ab8e1d47",
-    "BNB_BEP20": "0x19b4fd8f1f3acf094361abf777acd840ab8e1d47",
-    "SOLANA": "3cFr2xBUH9BX5GqFppYKiaxojimyUhZAo2mt168Tc24c",
-    "ETH_ERC20": "0x19b4fd8f1f3acf094361abf777acd840ab8e1d47"
+    "USDT_BEP20": os.getenv("USDT_BEP20"),
+    "BNB_BEP20": os.getenv("BNB_BEP20"),
+    "SOLANA": os.getenv("SOLANA"),
+    "ETH_ERC20": os.getenv("ETH_ERC20"),
 }
