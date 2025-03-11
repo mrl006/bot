@@ -40,6 +40,10 @@ async def ai_group_response(message: Message):
     await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
     await asyncio.sleep(2)
 
-    summarized_message = ai_services.summarize_content(user_message)
-    ai_reply = ai_services.get_short_ai_response(summarized_message, is_group_chat=True)
+    # ✅ Instead of listing everything, ask a **follow-up question**
+    if "design" in user_message.lower():
+        ai_reply = "🎨 What type of design do you need? (Logo, Branding, Poster, Animation?)"
+    else:
+        ai_reply = ai_services.get_short_ai_response(user_message, is_group_chat=True)
+
     await message.answer(ai_reply)
