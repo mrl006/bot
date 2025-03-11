@@ -28,5 +28,8 @@ async def ai_response(message: Message):
     if not user_message:
         return  # Ignore empty messages
 
+    # ✅ Show typing indicator before sending AI response
+    await message.answer_chat_action("typing")
+
     ai_reply = ai_services.get_ai_response(user_message)  # ✅ Send message to AI
     await message.answer(ai_reply, parse_mode="Markdown")  # ✅ Reply to user
