@@ -1,53 +1,20 @@
 import requests
 import json
 import logging
-from functools import lru_cache
 from config import GROQ_API_KEY, API_URL, MODEL_NAME
 
-# ✅ Configure logging
-logging.basicConfig(level=logging.INFO)
-
-# ✅ Short responses for group chats
-SHORT_RESPONSES = {
-    "who are you": "🤖 MRL AI, here to help!",
-    "what is your name": "🤖 MRL AI, your assistant!",
-    "is murali available": "🟢 Yes, Murali is around!",
-    "where is murali": "📍 Murali will be here soon!",
-    "can i talk to murali": "📩 I’ll let him know!",
-    "need design": "🎨 Noted! Murali will handle it.",
-    "i need a logo": "🖌 Noted! Logo request received.",
-    "need a poster": "📜 Got it! Poster design in progress.",
-}
-
-@lru_cache(maxsize=100)  # ✅ Cache responses to reduce API calls
-def get_short_ai_response(user_message, user_mentioned=False):
-    """Provide short AI responses in group chats."""
-
-    # ✅ If the user mentioned Murali, handle availability first
-    if user_mentioned:
-        if "available" in user_message.lower():
-            return SHORT_RESPONSES["is murali available"]
-        elif "talk to murali" in user_message.lower():
-            return SHORT_RESPONSES["can i talk to murali"]
-        elif "where is murali" in user_message.lower():
-            return SHORT_RESPONSES["where is murali"]
-
-    # ✅ Check for predefined short responses
-    for key, response in SHORT_RESPONSES.items():
-        if key in user_message.lower():
-            return response  
-
-    # ✅ If no predefined response, proceed with AI API call (Generate a **short** response)
+def get_ai_response(user_message, max_tokens):
+    """Send AI request to Groq API with dynamic token settings."""
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
         "Content-Type": "application/json"
     }
-    
+
     data = {
         "model": MODEL_NAME,
         "messages": [{"role": "user", "content": user_message}],
         "temperature": 0.7,
-        "max_tokens": 30,  # ✅ Keep responses short
+        "max_tokens": max_tokens,  # ✅ Shorter for group, longer for private
         "top_p": 1,
         "stream": False,
         "stop": None
@@ -60,8 +27,16 @@ def get_short_ai_response(user_message, user_mentioned=False):
         if "choices" in response_json and response_json["choices"]:
             return response_json["choices"][0]["message"]["content"]
         else:
-            return "⚠️ Try again later."
+            return "⚠️ AI is unavailable right now. Try again later."
     
     except requests.exceptions.RequestException as e:
-        logging.error(f"❌ AI connection error: {str(e)}")
-        return f"⚠️ Connection error."
+        logging.error(f"AI error: {str(e)}")
+        return "⚠️ Connection issue. Try again later."
+
+def get_short_ai_response(user_message, is_group_chat=True):
+    """Generate short responses for group chat."""
+    return get_ai_response(user_message, max_tokens=30 if is_group_chat else 150)
+
+def get_long_ai_response(user_message):
+    """Generate detailed responses for private chat."""
+    return get_ai_response(user_message, max_tokens=200)  # ✅ More tokens for private chat
