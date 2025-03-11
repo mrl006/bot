@@ -2,7 +2,6 @@ import logging
 import asyncio
 from aiogram import Router
 from aiogram.types import Message, ReactionTypeEmoji
-from aiogram.filters import Command
 import ai_services  # ✅ Import AI response module
 
 # ✅ Enable logging for debugging
@@ -119,10 +118,10 @@ async def ai_group_response(message: Message):
     # ✅ Log the incoming user message
     logging.info(f"[GROUP CHAT] User Message: {user_message}")
 
-    # ✅ Get AI response in SHORT form for group chat
+    # ✅ Get AI response in **SHORT** form for group chat
     ai_reply = ai_services.get_short_ai_response(user_message, user_mentioned=user_mentioned)
 
-    # ✅ Send the AI's response
+    # ✅ Send the AI's **short response**
     await message.answer(ai_reply, parse_mode="Markdown")
 
     # ✅ Log AI response for debugging
