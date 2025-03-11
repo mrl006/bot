@@ -1,8 +1,12 @@
 import requests
 import json
 import ai_protection
+import logging
 from functools import lru_cache
 from config import GROQ_API_KEY, API_URL
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
 # Load instructions.json
 instructions_file = "instructions.json"
@@ -44,13 +48,19 @@ def get_ai_response(user_message):
     }
 
     try:
+        logging.info(f"🔍 Sending AI request to: {API_URL}")
+        logging.info(f"📡 Request Data: {json.dumps(data, indent=2)}")
+
         response = requests.post(API_URL, json=data, headers=headers, timeout=10)
         response_json = response.json()
         
+        logging.info(f"✅ API Response: {json.dumps(response_json, indent=2)}")
+
         if "choices" in response_json and response_json["choices"]:
             return response_json["choices"][0]["message"]["content"]
         else:
-            return "⚠️ *AI is currently unavailable. Please try again later.*"
+            return "⚠️ *AI is currently unavailable. Please check API configuration.*"
     
     except requests.exceptions.RequestException as e:
-        return f"⚠️ *AI error: {str(e)}*"
+        logging.error(f"❌ AI connection error: {str(e)}")
+        return f"⚠️ *AI connection error: {str(e)}*"
