@@ -23,6 +23,9 @@ SHORT_RESPONSES = {
     "need a poster": "📜 Understood! Murali will create it.",
 }
 
+# ✅ List of keywords related to design topics
+DESIGN_KEYWORDS = ["design", "logo", "poster", "flyer", "branding", "graphic", "animation", "banner", "motion graphics"]
+
 @lru_cache(maxsize=100)  # ✅ Cache responses to reduce API calls
 def get_short_ai_response(user_message, user_mentioned=False):
     """Provide short AI responses in group chats."""
@@ -41,9 +44,9 @@ def get_short_ai_response(user_message, user_mentioned=False):
         if key in user_message.lower():
             return response  
 
-    # ✅ If the client provides design content, summarize it
-    if len(user_message) > 20 and "design" in user_message.lower():
-        return "🎨 Noted! Murali will check this."
+    # ✅ If the client shares content for a design, summarize it
+    if any(keyword in user_message.lower() for keyword in DESIGN_KEYWORDS) and len(user_message) > 20:
+        return "📌 Content noted for design! Murali will check this."
 
     # ✅ If no predefined response, proceed with AI API call
     headers = {
@@ -55,7 +58,7 @@ def get_short_ai_response(user_message, user_mentioned=False):
         "model": MODEL_NAME,
         "messages": [{"role": "user", "content": user_message}],
         "temperature": 0.7,
-        "max_tokens": 50,  # ✅ Limit response length
+        "max_tokens": 500,  # ✅ Limit response length
         "top_p": 1,
         "stream": False,
         "stop": None
