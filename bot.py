@@ -1,54 +1,40 @@
 import logging
 import asyncio
-from aiogram import Bot, Dispatcher, types
-from aiogram.types import Message
-from aiogram.filters import Command
-from aiogram.enums import ParseMode
-from aiogram.client.default import DefaultBotProperties  # ✅ Import required fix
-from config import API_TOKEN, OWNER_USERNAME
-import handlers, ai_services, admin_panel, database
+from aiogram import Bot, Dispatcher
+from aiogram.types import BotCommand
+from aiogram.client.default import DefaultBotProperties
+import personal_chat  # ✅ Import private chat handler
+import group_chat  # ✅ Import group chat handler
+from config import API_TOKEN
 
-# ✅ Fix: Set default parse mode using DefaultBotProperties
-bot = Bot(token=API_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+# ✅ Configure logging
+logging.basicConfig(level=logging.INFO)
 
-# Dispatcher for handling messages
+# ✅ Initialize bot with default settings
+bot = Bot(token=API_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
+
+# ✅ Initialize dispatcher
 dp = Dispatcher()
 
-# 📌 START COMMAND: Handles /start message
-@dp.message(Command("start"))
-async def send_welcome(message: Message):
-    welcome_text = (
-        "👋 *Welcome to MRL AI Assistant!* 🚀\n\n"
-        "💡 I can help you with:\n"
-        "📌 *Design Pricing*\n"
-        "📌 *AI-Powered Services*\n"
-        "📌 *Crypto Transactions*\n\n"
-        "🔹 Use /pricing to check design prices.\n"
-        "🔹 Use /contact to reach MRL Creation.\n\n"
-        "✨ *Let's get started!* ✨"
-    )
-    await message.answer(welcome_text, parse_mode="Markdown")
+# ✅ Include separate routers for private & group chats
+dp.include_router(personal_chat.router)  # ✅ Private chat handler
+dp.include_router(group_chat.router)     # ✅ Group chat handler
 
-# 📌 MAIN FUNCTION TO START BOT
+# ✅ Set bot commands
+async def set_bot_commands():
+    commands = [
+        BotCommand(command="start", description="Start the bot"),
+        BotCommand(command="help", description="Get help"),
+        BotCommand(command="pricing", description="View pricing"),
+        BotCommand(command="contact", description="Contact Murali")
+    ]
+    await bot.set_my_commands(commands)
+
+# ✅ Main function to start the bot
 async def main():
-    try:
-        # Register handlers
-        dp.include_router(handlers.router)
+    await set_bot_commands()
+    await dp.start_polling(bot)
 
-        # ✅ Set bot commands
-        await bot.set_my_commands([
-            types.BotCommand(command="start", description="Start MRL AI Assistant"),
-            types.BotCommand(command="pricing", description="View Design Pricing"),
-            types.BotCommand(command="contact", description="Contact MRL"),
-        ])
-
-        # ✅ Start polling (bot keeps running)
-        await dp.start_polling(bot)
-
-    except Exception as e:
-        logging.error(f"Error occurred: {e}")
-
-# ✅ Run the bot using asyncio.run()
+# ✅ Run the bot
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    asyncio.run(main())  # ✅ FIXED: Proper async execution
+    asyncio.run(main())
