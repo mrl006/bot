@@ -118,8 +118,11 @@ async def ai_group_response(message: Message):
     # ✅ Log the incoming user message
     logging.info(f"[GROUP CHAT] User Message: {user_message}")
 
-    # ✅ Get AI response in **SHORT** form for group chat
-    ai_reply = ai_services.get_short_ai_response(user_message, user_mentioned=user_mentioned)
+    # ✅ If message contains design content, generate a short summary
+    if len(user_message.split()) > 15:  # ✅ Only summarize long messages
+        ai_reply = ai_services.summarize_design_content(user_message)
+    else:
+        ai_reply = ai_services.get_short_ai_response(user_message, user_mentioned=user_mentioned)
 
     # ✅ Send the AI's **short response**
     await message.answer(ai_reply, parse_mode="Markdown")
