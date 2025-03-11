@@ -33,6 +33,13 @@ def get_ai_response(user_message, max_tokens):
         logging.error(f"AI error: {str(e)}")
         return "⚠️ Connection issue. Try again later."
 
+def summarize_content(content):
+    """Summarize long user messages related to design."""
+    if len(content.split()) > 50:  # ✅ Only summarize if the message is long
+        summary_prompt = f"Summarize this design request in one sentence:\n{content}"
+        return get_ai_response(summary_prompt, max_tokens=50)
+    return content  # ✅ Return original message if short
+
 def get_short_ai_response(user_message, is_group_chat=True):
     """Generate short responses for group chat."""
     return get_ai_response(user_message, max_tokens=30 if is_group_chat else 150)
