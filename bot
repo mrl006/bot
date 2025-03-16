@@ -1,0 +1,142 @@
+import os
+import logging
+import aiohttp
+import base64
+from telegram import Update, InputFile
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from langdetect import detect
+from sqlalchemy import create_engine, Column, String, DateTime
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+import uuid
+from datetime import datetime
+
+# --- Configuration ---
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-thinking-exp-01-21:generateContent"
+BOT_TOKEN = os.getenv("7685496371:AAHYG5Dz8lvY4sPOt-LUW5Rt-Aa1EvdLFNg"")  # Set your bot token in environment variables
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")  # Set Gemini API Key
+DB_URL = os.getenv("mongodb+srv://benjamin836712:iaDTnfu3iId9RnWf@mrlai.x0h8q.mongodb.net/?retryWrites=true&w=majority&appName=MRLai")
+ADMIN_IDS = [7685496371]  # Replace with admin Telegram IDs
+
+if not BOT_TOKEN:
+    raise ValueError("🚨 TELEGRAM_TOKEN is missing. Check environment variables!")
+
+if not GEMINI_API_KEY:
+    raise ValueError("🚨 GEMINI_API_KEY is missing. Check environment variables!")
+
+# --- Database Setup ---
+Base = declarative_base()
+
+class UserInteraction(Base):
+    __tablename__ = 'user_interactions'
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String)
+    message = Column(String)
+    response = Column(String)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    service_type = Column(String)
+
+engine = create_engine(DB_URL)
+Base.metadata.create_all(engine)
+Session = sessionmaker(bind=engine)
+
+# --- AI Response Handling ---
+async def generate_gemini_response(prompt: str, image_base64: str = None, lang: str = "en"):
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "contents": [{"parts": [{"text": f"Respond in {lang}. Be concise, use emojis. {prompt}"}]}]
+    }
+
+    if image_base64:
+        payload["contents"][0]["parts"].append({
+            "inline_data": {"mime_type": "image/jpeg", "data": image_base64}
+        })
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(f"{GEMINI_API_URL}?key={GEMINI_API_KEY}", json=payload, headers=headers) as response:
+            response_data = await response.json()
+            if "candidates" not in response_data:
+                return "🚨 Error: Unable to get a response from Gemini AI. Please try again later."
+            return response_data.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', 'No response')
+
+# --- Bot Handlers ---
+async def handle_private_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.message.from_user
+    text = update.message.text
+    lang = detect(text)
+
+    prompt = f"User asked: {text}. Include pricing for services: Graphics Design ($50-200), Video Editing ($75-300), 2D/3D Design ($100-500)"
+    response = await generate_gemini_response(prompt, lang=lang)
+
+    session = Session()
+    interaction = UserInteraction(user_id=str(user.id), message=text, response=response)
+    session.add(interaction)
+    session.commit()
+    session.close()
+
+    await update.message.reply_text(response)
+
+async def handle_group_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    message = update.message
+    lang = detect(message.text) if message.text else 'en'
+
+    last_interaction = context.user_data.get('last_interaction')
+    if last_interaction and (update.message.date - last_interaction).seconds < 300:
+        return
+
+    if message.photo:
+        photo = await message.photo[-1].get_file()
+        try:
+            image_data = await photo.download_as_bytearray()
+            image_base64 = base64.b64encode(image_data).decode('utf-8')
+        except Exception:
+            await message.reply_text("🚨 Error processing image. Please try a smaller file.")
+            return
+
+        prompt = "Suggest improvements for this design. Keep response under 2 sentences. Use emojis."
+        response = await generate_gemini_response(prompt, image_base64=image_base64, lang=lang)
+        await message.reply_text(response)
+        context.user_data['last_interaction'] = update.message.date
+        return
+
+    if any(keyword in message.text.lower() for keyword in ['price', 'design', 'edit']):
+        prompt = f"Professional response to: {message.text}"
+        response = await generate_gemini_response(prompt, lang=lang)
+        await message.reply_text(response)
+        context.user_data['last_interaction'] = update.message.date
+
+# --- Admin Commands ---
+async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id not in ADMIN_IDS:
+        return
+
+    message = ' '.join(context.args)
+    await update.message.reply_text(f"Broadcasting: {message}")
+
+async def user_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id not in ADMIN_IDS:
+        return
+    
+    session = Session()
+    users = session.query(UserInteraction).all()
+    session.close()
+    
+    if users:
+        user_list = "\n".join([f"User: {u.user_id}, Msg: {u.message[:20]}" for u in users])
+        await update.message.reply_text(f"User Info:\n{user_list}")
+    else:
+        await update.message.reply_text("No users found.")
+
+# --- Main Setup ---
+if __name__ == "__main__":
+    application = Application.builder().token(BOT_TOKEN).build()
+
+    # Handlers
+    application.add_handler(MessageHandler(filters.TEXT & filters.ChatType.PRIVATE, handle_private_message))
+    application.add_handler(MessageHandler(filters.TEXT | filters.PHOTO, handle_group_message))
+
+    # Admin commands
+    application.add_handler(CommandHandler("broadcast", broadcast))
+    application.add_handler(CommandHandler("userinfo", user_info))
+
+    application.run_polling()
